@@ -90,23 +90,25 @@ class Curator():
         cooked_rows = []
 
         for raw_row in raw_rows:
-            cooked_row = {}
-            for column_name, raw_value in raw_row.items():
-                transform = transforms_by_column[column_name]
-                if not transform:
-                    cooked_row[column_name] = raw_value
-                elif hasattr(transform, 'requires_row'):
-                    continue
-                else:
-                    cooked_row[column_name] = transform(raw_value)
-
+            #cooked_row = {}
             for column_name in column_names:
                 transform = transforms_by_column[column_name]
                 if not transform:
-                    continue
-                elif hasattr(transform, 'requires_row'):
-                    cooked_row[column_name] = transform(raw_row)
-            cooked_rows.append(cooked_row)
+                    raw_row[column_name] = raw_row.get(column_name)
+                elif isinstance(transform, list):
+                    for tr in transform:
+                        if hasattr(tr, 'requires_row'):
+                            raw_row[column_name] = tr(raw_row)
+                        else:
+                            if raw_row.get(column_name):
+                                raw_row[column_name] = tr(raw_row.get(column_name))
+                else:
+                    if hasattr(transform, 'requires_row'):
+                        raw_row[column_name] = transform(raw_row)
+                    else:
+                        if raw_row.get(column_name):
+                            raw_row[column_name] = transform(raw_row.get(column_name))                    
+            cooked_rows.append(raw_row)
         return cooked_rows
 
     @pypy_incompatible
@@ -124,10 +126,17 @@ class Curator():
             transform = self.table_registry.get_transform(table_name, column_name)
             if not transform:
                 continue
-            elif hasattr(transform, 'requires_row'):
-                df[column_name] = df.apply(transform, axis=1)
+            elif isinstance(transform, list):
+                for tr in transform:
+                    if hasattr(tr, 'requires_row'):
+                        df[column_name] = df.apply(tr, axis=1)
+                    else:
+                        df[column_name] = df[column_name].map(tr)
             else:
-                df[column_name] = df[column_name].map(transform)
+                if hasattr(transform, 'requires_row'):
+                    df[column_name] = df.apply(transform, axis=1)
+                else:
+                    df[column_name] = df[column_name].map(transform)
         return df
 
 

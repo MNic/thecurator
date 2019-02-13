@@ -28,3 +28,6 @@ def datetime(raw_value):
 
 def strip(raw_value):
     return raw_value.strip()
+
+def uppercase(raw_value):
+    return raw_value.upper()

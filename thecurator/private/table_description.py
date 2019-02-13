@@ -82,11 +82,20 @@ def convert_transform_to_fn(transform_key):
     For example, `transforms.numeric.absolute_value` would fetch the function
     `absolute_value` function from a `transforms.numeric` package.
     """
-    split = transform_key.split('.')
-    fn_name = split.pop()
-    module_name = '.'.join(split)
-    module = importlib.import_module(module_name)
-    fn = getattr(module, fn_name)
+    if isinstance(transform_key, list):
+        fn = []
+        for fn_val in transform_key:
+            split = fn_val.split('.')
+            fn_name = split.pop()
+            module_name = '.'.join(split)
+            module = importlib.import_module(module_name)
+            fn.append(getattr(module, fn_name))
+    elif isinstance(transform_key, str):
+        split = transform_key.split('.')
+        fn_name = split.pop()
+        module_name = '.'.join(split)
+        module = importlib.import_module(module_name)
+        fn = getattr(module, fn_name)
     if fn is None:
         raise ValueError(f'No transform found for {transform_key}')
     return fn

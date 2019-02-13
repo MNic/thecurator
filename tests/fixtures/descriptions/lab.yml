@@ -12,8 +12,10 @@ columns:
     description: >
       Lab name
     type: string
-    transform: transformers.lab.name
-
+    transform: 
+      - transformers.lab.name
+      - transformers.common.uppercase
+      
   - name: value
     description: >
       The value returned for the lab
